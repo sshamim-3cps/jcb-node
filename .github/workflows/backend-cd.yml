@@ -41,5 +41,6 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd jcbreact-be
-          docker build -t jcb/nodebackend:latest .
-          docker push jcb/nodebackend:latest
+          docker build -t jcb/nodebackend .
+          docker tag jcb/nodebackend:latest 617471489934.dkr.ecr.us-east-1.amazonaws.com/jcb/nodebackend:latest
+          docker push 617471489934.dkr.ecr.us-east-1.amazonaws.com/jcb/nodebackend:latest
