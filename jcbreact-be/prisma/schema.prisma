@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  index       String?
+  default     Boolean @default(false)
+  permissions Int
+  users       User[]
+}
+
+model User {
+  id            String         @id
+  first_name    String
+  last_name     String
+  user_name     String
+  email         String         @unique
+  role_id       Int
+  jwtVersion    Int            @default(0)
+  role          Role           @relation(fields: [role_id], references: [id])
+  conversations Conversation[]
+}
+
+model Conversation {
+  id          Int       @id @default(autoincrement())
+  start_time  DateTime  @default(now())
+  user_id     String
+  start_limit DateTime?
+  end_limit   DateTime?
+  messages    Message[]
+  user        User      @relation(fields: [user_id], references: [id])
+}
+
+model Message {
+  id              Int          @id @default(autoincrement())
+  content         String       @db.Text
+  timestamp       DateTime     @default(now())
+  sent_by_user    Boolean      @default(true)
+  conversation_id Int
+  conversation    Conversation @relation(fields: [conversation_id], references: [id])
+}
+
+model Project {
+  id            Int      @id @default(autoincrement())
+  name          String
+  user_comments Boolean
+  creation_time DateTime @default(now())
+}

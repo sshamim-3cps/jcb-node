@@ -1,0 +1,40 @@
+version: '3.4'
+services:
+  ticketfeeder:
+    build:
+      context: ./TicketFeeder
+      dockerfile: Dockerfile
+    ports:
+      - "9000:8080"
+    environment:
+      - FREQ=12h
+    env_file:
+      - .env
+    platform: linux/amd64
+    develop:
+      watch:
+        - action: rebuild
+          path: ./TicketFeeder
+          target: /var/task
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: 
+            -./.env
+            -package.json
+  mysql:
+    image: mysql:8
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_ROOT_USER: root
+      MYSQL_DATABASE: jcb
+    platform: linux/amd64
+    volumes:
+      - mysql-data:/var/lib/mysql   
+
+volumes:
+  mysql-data:  
+  
+

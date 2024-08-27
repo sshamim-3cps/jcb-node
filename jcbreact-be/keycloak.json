@@ -1,0 +1,10 @@
+{
+  "realm": "jcbnoderealm",
+  "auth-server-url": "http://localhost:8080/",
+  "ssl-required": "external",
+  "resource": "jcbnode",
+  "public-client": false,
+  "verify-token-audience": true,
+  "use-resource-role-mappings": true,
+  "confidential-port": 0
+}
