@@ -9,7 +9,7 @@ export async function getConversationById(conversationId: number) {
     });
 }
 
-//to trigger workflow acion
+//to trigger workflow acion [2]
 export async function addMessagesToConversation(conversationId: number, messages: Partial<Message>[]) {
     try {
         console.log('Adding messages to conversation#id:', conversationId);

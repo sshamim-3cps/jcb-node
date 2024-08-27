@@ -40,6 +40,6 @@ jobs:
           ECR_REPOSITORY: jcb/nodebackend
           IMAGE_TAG: latest
         run: |
-          cd backend
+          cd jcbreact-be
           docker build -t jcb/nodebackend:latest .
           docker push jcb/nodebackend:latest
