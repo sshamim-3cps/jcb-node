@@ -1,0 +1,44 @@
+#ref from: https://snehalchaure.medium.com/create-and-push-docker-image-to-amazon-ecr-with-github-actions-4b35d26e1563
+name: Push the Docker image to AWS ECR Repo
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'jcbreact-be/**'
+jobs:
+  Build:
+    name: Build
+    runs-on: self-hosted  
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # - name: Get commit hash
+      #   id: get-commit-hash
+      #   run: echo "::set-output name=commit-hash::$(git rev-parse --short HEAD)"
+      # - name: Get timestamp
+      #   id: get-timestamp
+      #   run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
+
+      - name: Build, tag, and push the image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: jcb/nodebackend
+          IMAGE_TAG: latest
+        run: |
+          cd backend
+          docker build -t jcb/nodebackend:latest .
+          docker push jcb/nodebackend:latest
