@@ -21,7 +21,9 @@ const express_session_1 = __importDefault(require("express-session"));
 const dao_1 = require("./lib/dao");
 const OpenAIEngine_1 = require("./OpenAIEngine");
 "@/OpenAIEngine";
+const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
+app.use((0, cors_1.default)());
 app.use((0, express_session_1.default)({
     secret: (_a = process.env.SESSION_SECRET) !== null && _a !== void 0 ? _a : 'SomeSuperRandomSecretKnumber123eyCanGoALongwayFromHomeLIkeSpiderManOrTheHulk',
     resave: false,

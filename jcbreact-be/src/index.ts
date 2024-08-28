@@ -1,16 +1,19 @@
 
 import dotenv from "dotenv";
 import { Message } from "@/types/Models";
+import { Request } from "express";
 dotenv.config();
 import express from "express";
 import { verifyToken } from "./middlewares/express-auth-middleware";
 import session from "express-session";
 import { createConversation, retrieveConversationMessages, addMessagesToConversation } from "./lib/dao";
 import { generateAIResponse } from "./OpenAIEngine"; "@/OpenAIEngine";
-
+import cors from "cors";
 
 
 const app = express();
+app.use(cors<Request>());
+
 app.use(session({
     secret: process.env.SESSION_SECRET ?? 'SomeSuperRandomSecretKnumber123eyCanGoALongwayFromHomeLIkeSpiderManOrTheHulk',
     resave: false,

@@ -88,7 +88,9 @@ export async function generateAIResponse(newMessage: string, prevMessages: Messa
         })
         console.log('Response [Completion]:', completion.choices[0].message.content);
         let response = completion.choices[0].message.content;
-        response += `\n\nIf these steps do not resolve the issue you can visit the related Jira Tickets using the following links: ${links.join('\n')}`;
+        if (links.length > 0) {
+            response += `\n\nIf these steps do not resolve the issue you can visit the related Jira Tickets using the following links: ${links.join('\n')}`;
+        }
         return response;
     }
     catch (err) {
