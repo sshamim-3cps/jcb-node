@@ -42,45 +42,124 @@ app.get('/test', (req, res) => {
 app.post('/test', (req, res) => {
     res.send('Protected Resource Test OK');
 });
-app.post('/send-message', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('Send Message', req.body);
-    let userMessage = req.body.message;
-    if (!userMessage || userMessage.length === 0) {
-        res.status(200).send('Blanks are harder to understand.');
+app.get('/project-list', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Request Get Project List for user: ", req.session.user.id);
+    try {
+        let projects = yield (0, dao_1.getProjects)();
+        res.send(projects);
+    }
+    catch (err) {
+        console.log('Error getting project list:', err);
+        res.status(500).send('Error getting project list');
+    }
+}));
+app.post('/new-conversation', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Create New conversation for user: ", req.session.user.id);
+    console.log('Request Body:', req.body);
+    let projects = req.body.projectIds;
+    let startTime = req.body.startTime;
+    let endTime = req.body.endTime;
+    if (!projects || projects.length === 0) {
+        console.log('Project list cannot be empty, returning bad request 400', projects);
+        res.status(400).send('Project list cannot be empty');
         return;
     }
-    let messageTime = new Date();
-    let prevMessages = [];
-    let conversationId = req.body.conversationId;
-    let projects = req.body.projects || ["WHW"];
-    if (!conversationId) {
-        console.log('No conversationId found');
-        conversationId = yield (0, dao_1.createConversation)(req.session.user.id, []);
-    }
-    else {
-        console.log('ConversationId found:', conversationId);
-        let converstaionMessages = yield (0, dao_1.retrieveConversationMessages)(conversationId, parseInt(process.env.HISTORY_SIZE)).catch(err => {
-            console.log('Error retrieving conversation:', err);
-            res.status(500).send('Error retrieving conversation');
-        });
-        if (converstaionMessages) {
-            prevMessages = converstaionMessages;
-        }
-    }
-    let chatResponse = yield (0, OpenAIEngine_1.generateAIResponse)(userMessage, prevMessages, projects);
-    console.log('Chat Response:', chatResponse === null || chatResponse === void 0 ? void 0 : chatResponse.length);
-    yield (0, dao_1.addMessagesToConversation)(conversationId, [{
-            content: userMessage,
-            timestamp: messageTime,
-            sent_by_user: true
-        },
-        {
-            content: chatResponse !== null && chatResponse !== void 0 ? chatResponse : 'No Response',
-            timestamp: new Date(),
-            sent_by_user: false
-        }]);
-    res.send({
-        response: chatResponse,
-        conversationId: conversationId
+    let conversation = yield (0, dao_1.createConversation)(req.session.user.id, projects, startTime, endTime, []).catch(err => {
+        console.log('Error creating conversation:', err);
+        res.status(500).send('Error creating conversation');
+        return;
     });
+    res.send(conversation);
+}));
+app.post('/send-message', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        console.log('Send Message', req.body);
+        let userMessage = req.body.message;
+        let conversationId = req.body.conversationId;
+        let contextTimeFrame = req.body.contextTimeFrame;
+        let projects = req.body.projects;
+        if (!userMessage || userMessage.length === 0) {
+            res.status(200).send('Blanks are harder to understand.');
+            return;
+        }
+        let messageTime = new Date();
+        let prevMessages = [];
+        if (!conversationId) {
+            console.error('ConversationId not found, returning bad request 400');
+            res.status(400).send('Conversation does not exist');
+            return;
+        }
+        else {
+            console.log('ConversationId found:', conversationId);
+            //TODO: Update conversation parameters in case a message contains different ones than the conversation in the database
+            let converstaionMessages = yield (0, dao_1.retrieveConversationMessages)(conversationId).catch(err => {
+                console.log('Error retrieving conversation:', err);
+                res.status(500).send('Error retrieving conversation');
+                return;
+            });
+            if (converstaionMessages) {
+                prevMessages = converstaionMessages;
+            }
+        }
+        console.log("GenAI Response params: ", userMessage, prevMessages, projects, contextTimeFrame);
+        let chatResponse = yield (0, OpenAIEngine_1.generateAIResponse)(userMessage, prevMessages, projects, contextTimeFrame);
+        console.log('Chat Response:', chatResponse === null || chatResponse === void 0 ? void 0 : chatResponse.length);
+        yield (0, dao_1.addMessagesToConversation)(conversationId, [{
+                content: userMessage,
+                timestamp: messageTime,
+                sent_by_user: true
+            },
+            {
+                content: chatResponse !== null && chatResponse !== void 0 ? chatResponse : 'No Response',
+                timestamp: new Date(),
+                sent_by_user: false
+            }]);
+        res.send({
+            reply: chatResponse
+        });
+    }
+    catch (err) {
+        console.error('Error sending message:', err);
+        res.send({
+            reply: 'I am having a bad day, please try again later.'
+        });
+    }
+}));
+app.get('/historical-messages', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        console.log(':::::: Get Historical messages ');
+        const pageNumber = parseInt((_a = req.query.page) !== null && _a !== void 0 ? _a : '0');
+        const conversationId = parseInt(req.query.conversationId);
+        const pageSize = parseInt((_b = req.query.pageSize) !== null && _b !== void 0 ? _b : '10');
+        if (isNaN(conversationId)) {
+            res.status(400).send("Invalid conversation Id: " + conversationId);
+            return;
+        }
+        if (isNaN(conversationId)) {
+            res.status(400).send("Invalid page size Id: " + pageSize);
+            return;
+        }
+        const convMessages = yield (0, dao_1.retrieveConversationMessages)(conversationId, pageNumber, pageSize);
+        console.log("#histoical-messages. Length#", convMessages.length, ", conversation id: ", conversationId);
+        res.send(convMessages);
+    }
+    catch (err) {
+        console.log('Error getting conversation list:', err);
+        res.status(500).send('Error getting conversation list');
+    }
+}));
+app.get('/conversation-history-list', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        console.log(':::::: Get Conversation List');
+        const userId = req.session.user.id;
+        const pageNumber = parseInt((_a = req.query.page) !== null && _a !== void 0 ? _a : '0');
+        const convHistory = yield (0, dao_1.getConversationList)(userId, pageNumber);
+        res.send(convHistory);
+    }
+    catch (err) {
+        console.log('Error getting conversation list:', err);
+        res.status(500).send('Error getting conversation list');
+    }
 }));

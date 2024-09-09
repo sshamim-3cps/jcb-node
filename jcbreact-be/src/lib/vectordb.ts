@@ -35,7 +35,7 @@ async function getWeaviateClient() {
 
 export async function getMatchingTickets(startTime: Date, endTime: Date, text: string, projects: string[]) {
     try {
-        console.log('Getting Matching Tickets, starttime:', startTime, 'endtime:', endTime, 'text:', text, 'projects:', projects);
+        console.log('#getMatchingTickets, starttime:', startTime, 'endtime:', endTime, 'text:', text, 'projects:', projects);
         const client = await getWeaviateClient().catch(err => {
             throw err;
         });
@@ -63,7 +63,7 @@ export async function getMatchingTickets(startTime: Date, endTime: Date, text: s
 
 export async function getMatchingTicketsConversation(startTime: Date, endTime: Date, text: string, projects: string[]) {
     try {
-        console.log('Getting Ticket as Conversation');
+        console.log('#getMatchingTicketsConversation, starttime:', startTime, 'endtime:', endTime, 'text:', text, 'projects:', projects);
         let tickets = await getMatchingTickets(startTime, endTime, text, projects);
         if (!tickets || tickets.length === 0) {
             return [[], []];

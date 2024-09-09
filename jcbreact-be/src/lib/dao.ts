@@ -1,5 +1,5 @@
 import prisma from './db';
-import { Message } from '@/declarations/types/Models';
+import { Message, Project } from '@/declarations/types/Models';
 
 export async function getConversationById(conversationId: number) {
     return prisma.conversation.findUnique({
@@ -7,6 +7,10 @@ export async function getConversationById(conversationId: number) {
             id: conversationId
         }
     });
+}
+
+export async function getProjects() {
+    return prisma.project.findMany();
 }
 
 //to trigger workflow acion [3]
@@ -30,26 +34,35 @@ export async function addMessagesToConversation(conversationId: number, messages
 }
 
 
-export async function createConversation(userId: string, messages: Message[]) {
+export async function createConversation(userId: string, projectIds: number[], startTime: Date, endTime: Date, messages: Message[]) {
     try {
         console.log('Creating conversation for userId:', userId);
+
         let conversation = await prisma.conversation.create({
             data: {
                 user_id: userId,
+                start_limit: startTime,
+                end_limit: endTime,
                 messages: {
                     create: messages
+                },
+                projects: {
+                    connect: projectIds.map(projectId => ({ id: projectId }))
                 }
+            },
+            include: {
+                projects: true
             }
         });
         console.log('Conversation created:', conversation);
-        return conversation.id;
+        return conversation;
     }
     catch (err: any) {
         throw new Error(`Unable to create new conversation of userId:[${userId}]. Reason: ${err.message}`)
     }
 }
 
-export async function retrieveConversationMessages(conversationId: number, limit: number = parseInt(process.env.HISTORY_SIZE!)): Promise<Message[]> {
+export async function retrieveConversationMessages(conversationId: number, pageNumber: number = 0, pageSize: number = parseInt(process.env.HISTORY_SIZE!)): Promise<Message[]> {
     try {
         console.log('Retrieving conversation for conversationId:', conversationId);
         let messages = await prisma.message.findMany({
@@ -59,7 +72,8 @@ export async function retrieveConversationMessages(conversationId: number, limit
             orderBy: {
                 timestamp: 'asc'
             },
-            take: limit
+            take: pageSize,
+            skip: pageNumber
         });
         return messages || [];
     }
@@ -70,7 +84,7 @@ export async function retrieveConversationMessages(conversationId: number, limit
 
 export async function retrieveConversation(conversationId: number) {
     try {
-        console.log('Retrieving conversation for conversationId:', conversationId);
+        console.log('#retrieveConversation for conversationId:', conversationId);
         let conversation = await prisma.conversation.findUnique({
             where: {
                 id: conversationId
@@ -83,6 +97,113 @@ export async function retrieveConversation(conversationId: number) {
     }
     catch (err: any) {
         throw new Error(`Unable to retrieve conversation of conversationId:[${conversationId}]. Reason: ${err.message}`)
+    }
+}
+
+export async function getConversationHistory(userId: string, pageNumber: number = 0, pageSize: number = 10) {
+    try {
+        console.log('Retrieving conversation history for user:', userId);
+        let conversations = await prisma.conversation.findMany({
+            where: {
+                AND: [
+                    {
+                        user_id: userId
+                    },
+                    {
+                        messages: {
+                            some: {}
+                        }
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                start_limit: true,
+                end_limit: true,
+                projects: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
+            },
+            orderBy: {
+                start_limit: 'desc'
+            },
+            take: pageSize,
+            skip: pageNumber * pageSize
+        });
+        return conversations;
+    }
+    catch (err: any) {
+        throw new Error(`Unable to retrieve conversation history of userId:[${userId}]. Reason: ${err.message}`)
+    }
+}
+
+export async function getConversationList(userId: string, pageNumber: number = 0, pageSize: number = 8) {
+    try {
+        console.log('Retrieving conversation list for user:', userId, 'Page:', pageNumber, 'Size:', pageSize);
+        let conversations = await prisma.conversation.findMany({
+            where: {
+                AND: [
+                    {
+                        user_id: userId
+                    },
+                    {
+                        messages: {
+                            some: {}
+                        }
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                start_time: true,
+                start_limit: true,
+                end_limit: true,
+                projects: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                messages: {
+                    where: {
+                        sent_by_user: true
+                    },
+                    select: {
+                        content: true,
+                        timestamp: true
+                    },
+                    orderBy: {
+                        timestamp: 'desc',
+                    },
+                    take: 1
+                }
+            },
+            orderBy: {
+                start_limit: 'desc'
+            },
+            take: pageSize,
+            skip: pageNumber * pageSize
+        });
+        console.log("Fetched conversations:", conversations.length, ". Formatting...");
+        let formattedConversations = conversations.map(conversation => {
+            return {
+                id: conversation.id,
+                startTime: conversation.start_time,
+                contextStartTime: conversation.start_limit,
+                contextEndTime: conversation.end_limit,
+                projects: conversation.projects,
+                lastMessage: conversation.messages[0]?.content,
+                lastMessageTime: conversation.messages[0]?.timestamp
+            }
+        });
+        console.log("Formatted conversations:", formattedConversations);
+        return formattedConversations;
+    }
+    catch (err: any) {
+        throw new Error(`Unable to retrieve conversation list of userId:[${userId}]. Reason: ${err.message}`)
     }
 }
 

@@ -65,13 +65,16 @@ async function getFormattedHistoricalContext(messages: Message[]) {
 }
 
 
-export async function generateAIResponse(newMessage: string, prevMessages: Message[], projects: string[], bulleted: boolean = false) {
+export async function generateAIResponse(newMessage: string, prevMessages: Message[], projects: string[], contextTimeFrame: Date[], bulleted: boolean = false, aiModel = OPEN_AI_CHAT_MODEL!) {
     try {
         console.log("OpenAIEngine#generateAIResponse");
         let history = await getFormattedHistoricalContext(prevMessages);
-        let startTime = prevMessages[0]?.timestamp;
+        console.log("Context Time Frame: ", contextTimeFrame);
+        console.log("StartTime:",(new Date(contextTimeFrame[0])).getTime(), "PrevMessage:", prevMessages[0]?.timestamp?.getTime());
+        let startTime = (new Date(contextTimeFrame[0])).getTime() < prevMessages[0]?.timestamp?.getTime() ? (new Date(contextTimeFrame[0])) : prevMessages[0]?.timestamp;
+        let endTime = (new Date(contextTimeFrame[1])).getTime() ? (new Date(contextTimeFrame[1])) : new Date();
         console.log("Start Time:::: " + startTime);
-        let [conversations, keys] = await getMatchingTicketsConversation(startTime, new Date(), newMessage, projects);
+        let [conversations, keys] = await getMatchingTicketsConversation(startTime, endTime, newMessage, projects);
         console.log("Keys: ", keys);
         let links = keys.map(k => `https://${process.env.JIRA_DOMAIN}.atlassian.net/browse/${k}`);
         let historicalContext = conversations.join('\n');
@@ -82,10 +85,10 @@ export async function generateAIResponse(newMessage: string, prevMessages: Messa
         });
         console.log("History: ", history);
         let completion = await client.chat.completions.create({
-            model: OPEN_AI_CHAT_MODEL!,
+            model: aiModel,
             temperature: parseFloat(AI_TEMPERATURE!),
             messages: history
-        })
+        });
         console.log('Response [Completion]:', completion.choices[0].message.content);
         let response = completion.choices[0].message.content;
         if (links.length > 0) {
