@@ -8,7 +8,7 @@ const { AUTH_VERIFY_URL } = process.env;
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         console.log("Verifying Token");
-
+        //throw new Error("Not Implemented");
         const token = req.header('Authorization');
         if (!token) {
             res.status(401).send('Unauthorized | No Token');
@@ -27,6 +27,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
                 'Authorization': token
             }
         });
+        
         if (!response.ok) {
             console.log("Invalid Token");  
             res.status(401).send('Unauthorized | Invalid Token');
@@ -55,7 +56,11 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
                         email: decoded.email,
                         first_name: decoded.given_name,
                         last_name: decoded.family_name,
-                        role_id: 2,
+                        role: {
+                            connect: {
+                                name: 'User'
+                            }
+                        },
                         user_name: decoded.preferred_username
                     }
                 }).catch(err => {

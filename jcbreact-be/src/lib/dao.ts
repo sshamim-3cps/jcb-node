@@ -41,8 +41,8 @@ export async function createConversation(userId: string, projectIds: number[], s
         let conversation = await prisma.conversation.create({
             data: {
                 user_id: userId,
-                start_limit: startTime,
-                end_limit: endTime,
+                context_start: startTime,
+                context_end: endTime,
                 messages: {
                     create: messages
                 },
@@ -118,8 +118,8 @@ export async function getConversationHistory(userId: string, pageNumber: number 
             },
             select: {
                 id: true,
-                start_limit: true,
-                end_limit: true,
+                context_start: true,
+                context_end: true,
                 projects: {
                     select: {
                         id: true,
@@ -128,7 +128,7 @@ export async function getConversationHistory(userId: string, pageNumber: number 
                 }
             },
             orderBy: {
-                start_limit: 'desc'
+                context_start: 'desc'
             },
             take: pageSize,
             skip: pageNumber * pageSize
@@ -153,14 +153,17 @@ export async function getConversationList(userId: string, pageNumber: number = 0
                         messages: {
                             some: {}
                         }
-                    }
+                    }, 
+                    // {
+                    //     archived: false
+                    // }
                 ]
             },
             select: {
                 id: true,
                 start_time: true,
-                start_limit: true,
-                end_limit: true,
+                context_start: true,
+                context_end: true,
                 projects: {
                     select: {
                         id: true,
@@ -182,7 +185,7 @@ export async function getConversationList(userId: string, pageNumber: number = 0
                 }
             },
             orderBy: {
-                start_limit: 'desc'
+                context_start: 'desc'
             },
             take: pageSize,
             skip: pageNumber * pageSize
@@ -192,8 +195,8 @@ export async function getConversationList(userId: string, pageNumber: number = 0
             return {
                 id: conversation.id,
                 startTime: conversation.start_time,
-                contextStartTime: conversation.start_limit,
-                contextEndTime: conversation.end_limit,
+                context_start: conversation.context_start,
+                context_end: conversation.context_end,
                 projects: conversation.projects,
                 lastMessage: conversation.messages[0]?.content,
                 lastMessageTime: conversation.messages[0]?.timestamp
@@ -204,6 +207,24 @@ export async function getConversationList(userId: string, pageNumber: number = 0
     }
     catch (err: any) {
         throw new Error(`Unable to retrieve conversation list of userId:[${userId}]. Reason: ${err.message}`)
+    }
+}
+
+export const archiveConversation = async (conversationId: number) => {
+    try {
+        console.log('Archiving conversation#id:', conversationId);
+        let conversation = await prisma.conversation.update({
+            where: {
+                id: conversationId
+            },
+            data: {
+                archived: true
+            }
+        });
+        return conversation;
+    }
+    catch (err: any) {
+        throw new Error(`Unable to archive conversation of conversationId:[${conversationId}]. Reason: ${err.message}`)
     }
 }
 

@@ -39,8 +39,9 @@ model Conversation {
   id          Int       @id @default(autoincrement())
   start_time  DateTime  @default(now())
   user_id     String
-  start_limit DateTime
-  end_limit   DateTime  @default(now())
+  context_start DateTime
+  context_end DateTime  @default(now())
+  archived     Boolean   @default(false)
   messages    Message[]
   projects    Project[]
   user        User      @relation(fields: [user_id], references: [id])

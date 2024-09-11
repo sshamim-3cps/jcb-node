@@ -4,19 +4,25 @@ const prisma = new PrismaClient();
 
 async function main() {
     // Create roles
-    // const adminRole = await prisma.role.create({
-    //     data: {
-    //         name: 'Admin',
-    //         permissions: 15,
-    //     },
-    // });
+    // await prisma.role.deleteMany();
+    // await prisma.project.deleteMany();
+    // await prisma.user.deleteMany();
+    // await prisma.message.deleteMany();
+    // await prisma.conversation.deleteMany();
 
-    // const userRole = await prisma.role.create({
-    //     data: {
-    //         name: 'User',
-    //         permissions: 1,
-    //     },
-    // });
+    const adminRole = await prisma.role.create({
+        data: {
+            name: 'Admin',
+            permissions: 15,
+        },
+    });
+
+    const userRole = await prisma.role.create({
+        data: {
+            name: 'User',
+            permissions: 1,
+        },
+    });
 
     // create projects
     await prisma.project.createMany({

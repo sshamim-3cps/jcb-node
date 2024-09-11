@@ -33,6 +33,7 @@
     "jsonwebtoken": "^9.0.2",
     "keycloak-connect": "^25.0.2",
     "openai": "^4.56.0",
+    "react-error-boundary": "^4.0.13",
     "weaviate-client": "^3.1.4"
   }
 }

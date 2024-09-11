@@ -29,8 +29,8 @@ CREATE TABLE `Conversation` (
     `start_time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `user_id` VARCHAR(191) NOT NULL,
     `project` JSON NOT NULL,
-    `start_limit` DATETIME(3) NULL,
-    `end_limit` DATETIME(3) NULL,
+    `context_start` DATETIME(3) NULL,
+    `context_end` DATETIME(3) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

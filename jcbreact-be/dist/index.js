@@ -163,3 +163,19 @@ app.get('/conversation-history-list', (req, res) => __awaiter(void 0, void 0, vo
         res.status(500).send('Error getting conversation list');
     }
 }));
+app.patch('/archive-conversation', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        console.log(':::::: Archive Conversation');
+        const conversationId = parseInt(req.body.conversationId);
+        if (isNaN(conversationId)) {
+            res.status(400).send("Invalid conversation Id: " + conversationId);
+            return;
+        }
+        const conv = yield (0, dao_1.archiveConversation)(conversationId);
+        res.send(conv);
+    }
+    catch (err) {
+        console.log('Error archiving conversation:', err);
+        res.status(500).send('Error archiving conversation');
+    }
+}));

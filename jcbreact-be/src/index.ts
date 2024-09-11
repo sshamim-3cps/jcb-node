@@ -11,7 +11,8 @@ import {
     retrieveConversationMessages,
     addMessagesToConversation,
     getConversationList,
-    getProjects
+    getProjects,
+    archiveConversation
 } from "./lib/dao";
 import { generateAIResponse } from "./OpenAIEngine"; "@/OpenAIEngine";
 import cors from "cors";
@@ -170,6 +171,23 @@ app.get('/conversation-history-list', async (req, res) => {
     catch (err) {
         console.log('Error getting conversation list:', err);
         res.status(500).send('Error getting conversation list');
+    }
+});
+
+app.patch('/archive-conversation', async (req, res) => {
+    try {
+        console.log(':::::: Archive Conversation');
+        const conversationId = parseInt(req.body.conversationId as string);
+        if (isNaN(conversationId)) {
+            res.status(400).send("Invalid conversation Id: " + conversationId);
+            return;
+        }
+        const conv = await archiveConversation(conversationId);
+        res.send(conv);
+    }
+    catch (err) {
+        console.log('Error archiving conversation:', err);
+        res.status(500).send('Error archiving conversation');
     }
 });
 
